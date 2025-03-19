@@ -1,0 +1,39 @@
+#comment
+name: .NET 3.1 Build and Sonar Analysis
+
+on:
+  push:
+    branches:
+      -  main 
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2) Setup .NET Core 3.1
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '3.1.x'
+
+     
+      # 5) Build your project
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      # (Optional) If your project isn't restored yet, add a separate 'dotnet restore' step
+      # - name: Restore
+      #   run: dotnet restore
+
+      # 6) Test with code coverage
+      - name: Test
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"
+
+      # 7) End Sonar scanning (uploads results to SonarCloud)
+      - name: SonarCloud - End Analysis
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
