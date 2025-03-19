@@ -25,11 +25,12 @@ jobs:
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: SonarCloud - Begin Analysis
-        run: dotnet sonarscanner begin /k:"acesonar_lab1" \
-                                      /o:"acesonar" \
-                                      /d:sonar.host.url="https://sonarcloud.io" \
-                                      /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
-                                      /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+        run: |
+          dotnet sonarscanner begin /k:"acesonar_lab1" /o:"acesonar" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
