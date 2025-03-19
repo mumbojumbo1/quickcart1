@@ -1,46 +1,49 @@
-name: .NET Build and SonarCloud Analysis
+name: .NET 3.1 Build and Sonar Analysis
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build-and-scan:
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Check out the code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
+      # 2) Setup .NET Core 3.1
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '3.1.x'  
+          dotnet-version: '3.1.x'
 
+      # 3) Install SonarScanner for .NET
       - name: Install SonarScanner for .NET
         run: dotnet tool install --global dotnet-sonarscanner
 
+      # 4) Begin Sonar scanning
       - name: SonarCloud - Begin Analysis
-        run: |
-          dotnet sonarscanner begin /k:"acesonar_lab1" /o:"acesonar" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+        # Single-line command to avoid "Unrecognized argument" errors
+        run: dotnet sonarscanner begin /k:"acesonar_lab1" /o:"acesonar" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
+      # 5) Build your project
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
+      # (Optional) If your project isn't restored yet, add a separate 'dotnet restore' step
+      # - name: Restore
+      #   run: dotnet restore
+
+      # 6) Test with code coverage
       - name: Test
-        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage"
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"
 
+      # 7) End Sonar scanning (uploads results to SonarCloud)
       - name: SonarCloud - End Analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
