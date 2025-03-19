@@ -1,0 +1,45 @@
+name: .NET Build and SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'  
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: SonarCloud - Begin Analysis
+        run: dotnet sonarscanner begin /k:"acesonar_lab1" \
+                                      /o:"acesonar" \
+                                      /d:sonar.host.url="https://sonarcloud.io" \
+                                      /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+                                      /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: SonarCloud - End Analysis
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
