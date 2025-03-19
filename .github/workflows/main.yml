@@ -1,4 +1,4 @@
-name: .NET Build and SonarCloud Analysis
+name: Build and Sonar Analysis
 
 on:
   push:
@@ -13,40 +13,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Check out the code
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2) Install .NET SDK
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'  # or any .NET version you need
+          dotnet-version: '3.1.x'
 
-      # 3) Install SonarScanner for .NET tool
       - name: Install SonarScanner for .NET
         run: dotnet tool install --global dotnet-sonarscanner
 
-      # 4) Begin Sonar Scanner
       - name: SonarCloud - Begin Analysis
         run: dotnet sonarscanner begin /k:"acesonar_lab1" /o:"acesonar" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
-        env:
-          # Inject SONAR_TOKEN as an environment variable
-          # The tool uses this if we do not pass /d:sonar.login= explicitly,
-          # but it's included above for clarity.
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # 5) Build your solution
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
-      # 6) Run tests (generate coverage optional)
       - name: Test
-        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage"
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"
 
-      # 7) End Sonar Scanner (upload analysis to SonarCloud)
       - name: SonarCloud - End Analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
